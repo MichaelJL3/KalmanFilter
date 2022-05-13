@@ -245,21 +245,18 @@ class TestKalmanFilter(TestCase):
             KalmanDataEx0.get_p_1_0(),
             KalmanDataEx0.get_r(),
             KalmanDataEx0.get_h(),
-            KalmanDataEx0.get_f(),
-            KalmanDataEx0.get_q(),
             KalmanDataEx0.get_x_1_1(),
-            KalmanDataEx0.get_p_1_1()
+            KalmanDataEx0.get_p_1_1(),
+            KalmanDataEx0.get_v_1_1()
         ]
     ])
-    def test_stateful_update_function(self, dim_x, dim_z, Z, X, P, R, H, F, Q, exp_x, exp_p):
+    def test_stateful_update_function(self, dim_x, dim_z, Z, X, P, R, H, exp_x, exp_p, exp_v):
         """Should update current iteration."""
         kalman = KalmanFilter(
             dim_x,
             dim_z,
             X=X,
             P=P,
-            F=F,
-            Q=Q,
             R=R,
             H=H
         )
@@ -268,5 +265,7 @@ class TestKalmanFilter(TestCase):
 
         self.assertIsNotNone(next_x)
         self.assertIsNotNone(next_p)
+        self.assertIsNotNone(kalman.V)
+        np.testing.assert_almost_equal(exp_v, kalman.V, decimal=1)
         np.testing.assert_almost_equal(exp_x, next_x, decimal=1)
         np.testing.assert_almost_equal(exp_p, next_p, decimal=1)

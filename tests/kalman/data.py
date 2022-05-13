@@ -42,6 +42,11 @@ class KalmanDataEx0:
         return np.array([-694.3, -347.15, -86.8, 529.8, 264.9, 66.23])
 
     @staticmethod
+    def get_v_1_1():
+        """Get V first updated state."""
+        return np.array([-3.1,  2.4])
+
+    @staticmethod
     def get_p():
         """Get P initial state."""
         return np.identity(6) * 500
