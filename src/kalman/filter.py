@@ -1,45 +1,110 @@
 
-import numpy as np
+"""Kalman filter."""
 
 from typing import Tuple
+
+import numpy as np
 
 Mat = np.array
 
 def gain(P: Mat, R: Mat, H: Mat) -> Mat:
-    H_T = H.transpose()
+    """Calculate kalman gain.
 
-    K_temp = np.dot(P, H_T)
-    K = K_temp.dot(np.linalg.inv(np.dot(H, K_temp) + R))
+    Args:
+        P (Mat): The estimate uncertainty matrix.
+        R (Mat): The meaurement uncertainty matrix.
+        H (Mat): The observation matrix.
+
+    Returns:
+        Mat: The gain matrix.
+    """
+    h_t = H.transpose()
+
+    k_temp = np.dot(P, h_t)
+    K = k_temp.dot(np.linalg.inv(np.dot(H, k_temp) + R))
 
     return K
 
-def covariance_update(P: Mat, K: Mat, R: Mat, H: Mat) -> np.array:
-    K_T = K.transpose()
+def covariance_update(P: Mat, K: Mat, R: Mat, H: Mat) -> Mat:
+    """Calculate the covariance update.
+
+    Args:
+        P (Mat): The estimate uncertainty matrix.
+        K (Mat): The gain matrix.
+        R (Mat): The meaurement uncertainty matrix.
+        H (Mat): The observation matrix.
+
+    Returns:
+        Mat: The covariance matrix.
+    """
+    k_t = K.transpose()
     I = np.identity(P.shape[0])
 
-    P_temp = I - K.dot(H)
-    P_temp_T = np.transpose(P_temp)
-    P1 = P_temp.dot(P).dot(P_temp_T) + K.dot(R).dot(K_T)
+    p_temp = I - K.dot(H)
+    p_temp_t = np.transpose(p_temp)
+    P1 = p_temp.dot(P).dot(p_temp_t) + K.dot(R).dot(k_t)
 
     return P1
 
 def state_update(Z: Mat, X: Mat, K: Mat, H: Mat) -> Mat:
+    """Calculate the state updates.
+
+    Args:
+        Z (Mat): The measurement vector.
+        X (Mat): The state vector.
+        K (Mat): The gain matrix.
+        H (Mat): The observation matrix.
+
+    Returns:
+        Mat: The updated state vector.
+    """
     X1 = X + K.dot(Z - H.dot(X))
 
     return X1
 
 def covariance_extrapolate(F: Mat, P1: Mat, Q: Mat) -> Mat:
-    F_T = F.transpose()
-    P2 = F.dot(P1).dot(F_T) + Q
-    
+    """Calculate the covariance prediction.
+
+    Args:
+        F (Mat):  The state transition matrix.
+        P1 (Mat): The Estimate uncertainty matrix.
+        Q (Mat):  The process noise matrix.
+
+    Returns:
+        Mat: Predicted uncertainty matrix.
+    """
+    f_t = F.transpose()
+    P2 = F.dot(P1).dot(f_t) + Q
+
     return P2
 
 def state_extrapolate(F: Mat, X1: Mat) -> Mat:
+    """Calculate the state prediction.
+
+    Args:
+        F (Mat):  The state transition matrix.
+        X1 (Mat): The state vector.
+
+    Returns:
+        Mat: Predicted state matrix.
+    """
     X2 = F.dot(X1)
-    
+
     return X2
 
 def update(Z: Mat, X: Mat, P: Mat, R: Mat, H: Mat) -> Tuple[Mat, Mat]:
+    """Update with next measurement.
+
+    Args:
+        Z (Mat): The measurement vector.
+        X (Mat): The system state vector.
+        P (Mat): The estimate uncertainty matrix.
+        R (Mat): The meaurement uncertainty matrix.
+        H (Mat): The observation matrix.
+
+    Returns:
+        Tuple[Mat, Mat]: The updated state and uncertainty matrices.
+    """
     K  = gain(P, R, H)
     X1 = state_update(Z, X, K, H)
     P1 = covariance_update(P, K, R, H)
@@ -47,12 +112,29 @@ def update(Z: Mat, X: Mat, P: Mat, R: Mat, H: Mat) -> Tuple[Mat, Mat]:
     return (X1, P1)
 
 def predict(X1: Mat, P1: Mat, F: Mat, Q: Mat) -> Tuple[Mat, Mat]:
+    """Predict actual state.
+
+    Args:
+        X1 (Mat): The system state vector.
+        P1 (Mat): The estimate uncertainty matrix.
+        F (Mat): The state transition matrix.
+        Q (Mat): The process noise matrix.
+
+    Returns:
+        Tuple[Mat, Mat]: The predicted state and uncertainty matrices.
+    """
     X2 = state_extrapolate(F, X1)
     P2 = covariance_extrapolate(F, P1, Q)
 
     return (X2, P2)
 
 class KalmanFilter:
+    """KalmanFilter class.
+
+    Raises:
+        ValueError: If matrix dimensions are improper.
+    """
+
     _F: Mat
     _H: Mat
     _R: Mat
@@ -61,17 +143,27 @@ class KalmanFilter:
     _X: Mat
 
     @property
-    def F(self):
+    def F(self) -> Mat:
+        """Get the transition matrix.
+
+        Returns:
+            Mat: The matrix.
+        """
         return self._F
 
     @F.setter
     def F(self, F: Mat):
         if F.shape != (self.dim_x, self.dim_x):
-            self.__shape_error('F', (self.dim_x, self.dim_x), F.shape)
+            KalmanFilter.__shape_error('F', (self.dim_x, self.dim_x), F.shape)
         self._F = F
 
     @property
-    def H(self):
+    def H(self) -> Mat:
+        """Get the observation matrix.
+
+        Returns:
+            Mat: The matrix.
+        """
         return self._H
 
     @H.setter
@@ -81,7 +173,12 @@ class KalmanFilter:
         self._H = H
 
     @property
-    def R(self):
+    def R(self) -> Mat:
+        """Get the measurement uncertainty matrix.
+
+        Returns:
+            Mat: The matrix.
+        """
         return self._R
 
     @R.setter
@@ -91,7 +188,12 @@ class KalmanFilter:
         self._R = R
 
     @property
-    def Q(self):
+    def Q(self) -> Mat:
+        """Get the process noise matrix.
+
+        Returns:
+            Mat: The matrix.
+        """
         return self._Q
 
     @Q.setter
@@ -101,7 +203,12 @@ class KalmanFilter:
         self._Q = Q
 
     @property
-    def P(self):
+    def P(self) -> Mat:
+        """Get the estimate uncertainty matrix.
+
+        Returns:
+            Mat: The matrix.
+        """
         return self._P
 
     @P.setter
@@ -111,7 +218,12 @@ class KalmanFilter:
         self._P = P
 
     @property
-    def X(self):
+    def X(self) -> Mat:
+        """Get the state vector.
+
+        Returns:
+            Mat: The matrix.
+        """
         return self._X
 
     @X.setter
@@ -122,9 +234,20 @@ class KalmanFilter:
 
     @property
     def V(self) -> Mat:
+        """Get the random noise vector.
+
+        Returns:
+            Mat: The vector.
+        """
         return self._V
-    
+
     def __init__(self, dim_x: int, dim_z: int, **kwargs):
+        """Ctor
+
+        Args:
+            dim_x (int): The size of the x dimension.
+            dim_z (int): The size of the z dimension.
+        """
         self.dim_x = dim_x
         self.dim_z = dim_z
         self.F = kwargs.get('F')
@@ -133,11 +256,31 @@ class KalmanFilter:
         self.R = kwargs.get('R', np.identity(dim_z))
         self.Q = kwargs.get('Q', np.identity(dim_x))
         self.P = kwargs.get('P', np.identity(dim_x))
+        self._V = np.zeros(dim_x)
 
-    def __shape_error(self, name: str, shapeA: Tuple[int, int], shapeB: Tuple[int, int]):
-        raise ValueError(f'{name} should have shape {shapeA} cannot set to {shapeB}')
+    @staticmethod
+    def __shape_error(name: str, expected: Tuple[int, int], actual: Tuple[int, int]):
+        """Handle improper dimensions.
+
+        Args:
+            name (str): The name of the matrix.
+            expected (Tuple[int, int]): The expected dimensions.
+            actual (Tuple[int, int]): The actual dimensions.
+
+        Raises:
+            ValueError: The error for mismatched dimensionality.
+        """
+        raise ValueError(f'{name} should have shape {expected} cannot set to {actual}')
 
     def update(self, Z: Mat) -> Tuple[Mat, Mat]:
+        """Update with next measurement.
+
+        Args:
+            Z (Mat): The measurement vector.
+
+        Returns:
+            Tuple[Mat, Mat]: The updated state and uncertainty matrices.
+        """
         (X1, P1) = update(Z, self.X, self.P, self.R, self.H)
         self._V = Z - self.H.dot(X1)
         self.X = X1
@@ -145,6 +288,11 @@ class KalmanFilter:
         return (X1, P1)
 
     def predict(self) -> Tuple[Mat, Mat]:
+        """Predict actual state.
+
+        Returns:
+            Tuple[Mat, Mat]: The predicted state and uncertainty matrices.
+        """
         (X2, P2) = predict(self.X, self.P, self.F, self.Q)
         self.X = X2
         self.P = P2
