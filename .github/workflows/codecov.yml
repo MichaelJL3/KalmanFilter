@@ -1,0 +1,31 @@
+name: Code Cov
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+jobs:
+  test-and-upstream:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.8", "3.9", "3.10"]
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v3
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: |
+          pip install pytest-cov
+          pip install -r requirements.txt
+      - name: Run tests and collect coverage
+        run: |
+          coverage run -m pytest
+          coverage xml
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v2
