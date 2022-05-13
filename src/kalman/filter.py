@@ -250,8 +250,8 @@ class KalmanFilter:
         """
         self.dim_x = dim_x
         self.dim_z = dim_z
-        self.F = kwargs.get('F')
-        self.H = kwargs.get('H')
+        self.F = kwargs.get('F', np.zeros((dim_x, dim_x)))
+        self.H = kwargs.get('H', np.zeros((dim_z, dim_x)))
         self.X = kwargs.get('X', np.zeros(dim_x))
         self.R = kwargs.get('R', np.identity(dim_z))
         self.Q = kwargs.get('Q', np.identity(dim_x))

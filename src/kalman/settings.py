@@ -26,8 +26,8 @@ class KalmanSettings:
             raise ValueError(f"dimensions cannot be less than 0, actual {dimensions}")
 
         self.X = np.zeros(self.dim_x) if self.X is None else self.X
-        self.P = np.identity(self.dim_x) if self.P is None else self.P
         self.F = np.zeros((self.dim_x, self.dim_x)) if self.F is None else self.F
-        self.Q = np.zeros((self.dim_x, self.dim_x)) if self.Q is None else self.Q
-        self.H = np.zeros((self.dim_x, self.dim_z)) if self.H is None else self.H
-        self.R = np.zeros((self.dim_z, self.dim_z)) if self.R is None else self.R
+        self.H = np.zeros((self.dim_z, self.dim_x)) if self.H is None else self.H
+        self.P = np.identity(self.dim_x) if self.P is None else self.P
+        self.Q = np.identity(self.dim_x) if self.Q is None else self.Q
+        self.R = np.identity(self.dim_z) if self.R is None else self.R

@@ -41,6 +41,11 @@ class TestKalmanSettings(TestCase):
         )
 
         self.assertIsNotNone(settings)
+        self.assertEqual((1,), settings.X.shape)
+        self.assertEqual((1,), settings.H.shape)
+        self.assertEqual((1,), settings.R.shape)
+        self.assertEqual((1,), settings.P.shape)
+        self.assertEqual((1,), settings.F.shape)
         self.assertEqual((1,), settings.Q.shape)
 
     def test_mixed_settings(self):
@@ -57,14 +62,17 @@ class TestKalmanSettings(TestCase):
         )
 
         self.assertIsNotNone(settings)
-        self.assertEqual((1,),   settings.F.shape)
+        self.assertEqual((1,), settings.X.shape)
+        self.assertEqual((1,), settings.H.shape)
+        self.assertEqual((1,), settings.R.shape)
+        self.assertEqual((1,), settings.P.shape)
+        self.assertEqual((1,), settings.F.shape)
         self.assertEqual((1, 1), settings.Q.shape)
 
     def test_negative_dimensions_throws(self):
         """Should throw if dimension is negative."""
 
         with self.assertRaises(ValueError):
-            KalmanSettings(-1, -1)
-
+            KalmanSettings(-1, 1)
         with self.assertRaises(ValueError):
             KalmanSettings(3, -1)
