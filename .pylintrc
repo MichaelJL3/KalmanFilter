@@ -7,4 +7,4 @@ disable=
     too-few-public-methods
 
 # Allow kalman filter mathematical names.
-good-names=H,P,R,F,X,Q,K,Z,I,V,_H,_P,_R,_F,_X,_Q,_V,X1,X2,P1,P2
+good-names=H,P,R,F,X,Q,K,Z,I,V,U,W,G,_H,_P,_R,_F,_X,_U,_G,_W,_Q,_V,X1,X2,P1,P2

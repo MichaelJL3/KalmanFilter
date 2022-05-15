@@ -18,6 +18,8 @@ class KalmanSettings:
     Q: Mat = None # The process noise matrix
     H: Mat = None # The observation matrix
     R: Mat = None # The meaurement uncertainty matrix
+    G: Mat = None # The control matrix
+    W: Mat = None # The process noise vector
 
     def __post_init__(self):
         """Fill defaults for remaining settings."""

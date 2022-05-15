@@ -25,6 +25,8 @@ class TestKalmanSettings(TestCase):
         self.assertIsNotNone(settings.P)
         self.assertIsNotNone(settings.F)
         self.assertIsNotNone(settings.Q)
+        self.assertIsNone(settings.G)
+        self.assertIsNone(settings.W)
 
     def test_full_settings(self):
         """Should not overwrite filled in values."""
@@ -37,7 +39,9 @@ class TestKalmanSettings(TestCase):
             R = np.zeros(1),
             P = np.zeros(1),
             F = np.zeros(1),
-            Q = np.zeros(1)
+            Q = np.zeros(1),
+            G = np.zeros(1),
+            W = np.zeros(1)
         )
 
         self.assertIsNotNone(settings)
@@ -47,6 +51,8 @@ class TestKalmanSettings(TestCase):
         self.assertEqual((1,), settings.P.shape)
         self.assertEqual((1,), settings.F.shape)
         self.assertEqual((1,), settings.Q.shape)
+        self.assertEqual((1,), settings.G.shape)
+        self.assertEqual((1,), settings.W.shape)
 
     def test_mixed_settings(self):
         """Should overwrite missing values."""
@@ -68,6 +74,8 @@ class TestKalmanSettings(TestCase):
         self.assertEqual((1,), settings.P.shape)
         self.assertEqual((1,), settings.F.shape)
         self.assertEqual((1, 1), settings.Q.shape)
+        self.assertIsNone(settings.G)
+        self.assertIsNone(settings.W)
 
     def test_negative_dimensions_throws(self):
         """Should throw if dimension is negative."""

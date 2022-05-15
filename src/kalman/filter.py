@@ -78,17 +78,22 @@ def covariance_extrapolate(F: Mat, P1: Mat, Q: Mat) -> Mat:
 
     return P2
 
-def state_extrapolate(F: Mat, X1: Mat) -> Mat:
+def state_extrapolate(F: Mat, X1: Mat, G: Mat=None, U: Mat=None, W: Mat=None) -> Mat:
     """Calculate the state prediction.
 
     Args:
         F (Mat):  The state transition matrix.
         X1 (Mat): The state vector.
+        U (Mat):  (Optional) The input vector.
+        G (Mat):  (Optional) The control matrix.
+        W (Mat):  (Optional) The process noise vector.
 
     Returns:
         Mat: Predicted state matrix.
     """
     X2 = F.dot(X1)
+    if G and U and W:
+        X2 += G.dot(U) + W
 
     return X2
 
@@ -111,7 +116,8 @@ def update(Z: Mat, X: Mat, P: Mat, R: Mat, H: Mat) -> Tuple[Mat, Mat]:
 
     return (X1, P1)
 
-def predict(X1: Mat, P1: Mat, F: Mat, Q: Mat) -> Tuple[Mat, Mat]:
+def predict(X1: Mat, P1: Mat, F: Mat, Q: Mat, \
+    U: Mat=None, G: Mat=None, W: Mat=None) -> Tuple[Mat, Mat]:
     """Predict actual state.
 
     Args:
@@ -119,11 +125,14 @@ def predict(X1: Mat, P1: Mat, F: Mat, Q: Mat) -> Tuple[Mat, Mat]:
         P1 (Mat): The estimate uncertainty matrix.
         F (Mat): The state transition matrix.
         Q (Mat): The process noise matrix.
+        U (Mat):  (Optional) The input vector.
+        G (Mat):  (Optional) The control matrix.
+        W (Mat):  (Optional) The process noise vector.
 
     Returns:
         Tuple[Mat, Mat]: The predicted state and uncertainty matrices.
     """
-    X2 = state_extrapolate(F, X1)
+    X2 = state_extrapolate(F, X1, G, U, W)
     P2 = covariance_extrapolate(F, P1, Q)
 
     return (X2, P2)
@@ -141,6 +150,8 @@ class KalmanFilter:
     _Q: Mat
     _P: Mat
     _X: Mat
+    _G: Mat
+    _W: Mat
 
     @property
     def F(self) -> Mat:
@@ -233,6 +244,36 @@ class KalmanFilter:
         self._X = X
 
     @property
+    def W(self) -> Mat:
+        """Get the process noise vector.
+
+        Returns:
+            Mat: The vector.
+        """
+        return self._W
+
+    @W.setter
+    def W(self, W: Mat):
+        if W and W.shape != (self.dim_x,):
+            self.__shape_error('W', (self.dim_x,), W.shape)
+        self._W = W
+
+    @property
+    def G(self) -> Mat:
+        """Get the control matrix.
+
+        Returns:
+            Mat: The matrix.
+        """
+        return self._G
+
+    @G.setter
+    def G(self, G: Mat):
+        if G and G.shape[0] != self.dim_x:
+            self.__shape_error('G', (self.dim_x,), G.shape)
+        self._G = G
+
+    @property
     def V(self) -> Mat:
         """Get the random noise vector.
 
@@ -256,6 +297,8 @@ class KalmanFilter:
         self.R = kwargs.get('R', np.identity(dim_z))
         self.Q = kwargs.get('Q', np.identity(dim_x))
         self.P = kwargs.get('P', np.identity(dim_x))
+        self.G = kwargs.get('G')
+        self.W = kwargs.get('W')
         self._V = np.zeros(dim_x)
 
     @staticmethod
@@ -287,13 +330,16 @@ class KalmanFilter:
         self.P = P1
         return (X1, P1)
 
-    def predict(self) -> Tuple[Mat, Mat]:
+    def predict(self, U: Mat=None) -> Tuple[Mat, Mat]:
         """Predict actual state.
+
+        Args:
+            U (Mat): (Optional) The control input.
 
         Returns:
             Tuple[Mat, Mat]: The predicted state and uncertainty matrices.
         """
-        (X2, P2) = predict(self.X, self.P, self.F, self.Q)
+        (X2, P2) = predict(self.X, self.P, self.F, self.Q, U, self.G, self.W)
         self.X = X2
         self.P = P2
         return (X2, P2)
